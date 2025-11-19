@@ -5,11 +5,11 @@
 
 #include "task/include/task.hpp"
 
-namespace nesterov_a_test_task_processes {
+namespace sakharov_a_count_num_in_string {
 
 using InType = int;
 using OutType = int;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace nesterov_a_test_task_processes
+}  // namespace sakharov_a_count_num_in_string

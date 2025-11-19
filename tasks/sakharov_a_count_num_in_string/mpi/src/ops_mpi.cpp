@@ -1,31 +1,31 @@
-#include "example_processes/mpi/include/ops_mpi.hpp"
+#include "sakharov_a_count_num_in_string/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
 
 #include <numeric>
 #include <vector>
 
-#include "example_processes/common/include/common.hpp"
+#include "sakharov_a_count_num_in_string/common/include/common.hpp"
 #include "util/include/util.hpp"
 
-namespace nesterov_a_test_task_processes {
+namespace sakharov_a_count_num_in_string {
 
-NesterovATestTaskMPI::NesterovATestTaskMPI(const InType &in) {
+SakharovATestTaskMPI::SakharovATestTaskMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool NesterovATestTaskMPI::ValidationImpl() {
+bool SakharovATestTaskMPI::ValidationImpl() {
   return (GetInput() > 0) && (GetOutput() == 0);
 }
 
-bool NesterovATestTaskMPI::PreProcessingImpl() {
+bool SakharovATestTaskMPI::PreProcessingImpl() {
   GetOutput() = 2 * GetInput();
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskMPI::RunImpl() {
+bool SakharovATestTaskMPI::RunImpl() {
   auto input = GetInput();
   if (input == 0) {
     return false;
@@ -64,9 +64,9 @@ bool NesterovATestTaskMPI::RunImpl() {
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskMPI::PostProcessingImpl() {
+bool SakharovATestTaskMPI::PostProcessingImpl() {
   GetOutput() -= GetInput();
   return GetOutput() > 0;
 }
 
-}  // namespace nesterov_a_test_task_processes
+}  // namespace sakharov_a_count_num_in_string
