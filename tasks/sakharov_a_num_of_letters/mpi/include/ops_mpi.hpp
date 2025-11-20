@@ -1,16 +1,16 @@
 #pragma once
 
-#include "sakharov_a_count_num_in_string/common/include/common.hpp"
+#include "sakharov_a_num_of_letters/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace sakharov_a_count_num_in_string {
+namespace sakharov_a_num_of_letters {
 
-class SakharovATestTaskMPI : public BaseTask {
+class SakharovANumberOfLettersMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  explicit SakharovATestTaskMPI(const InType &in);
+  explicit SakharovANumberOfLettersMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -19,4 +19,4 @@ class SakharovATestTaskMPI : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace sakharov_a_count_num_in_string
+}  // namespace sakharov_a_num_of_letters
