@@ -8,24 +8,24 @@
 namespace sakharov_a_num_of_letters {
 
 class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kRepeat_ = 10000000;
+  static constexpr int kRepeat = 10000000;
   const std::string pattern_ = "abcdABCD";
   InType input_data_{};
-  OutType expectedResult_ = 0;
+  OutType expected_result_ = 0;
 
   void SetUp() override {
     std::string s;
-    s.reserve(static_cast<std::size_t>(kRepeat_) * pattern_.size());
-    for (int i = 0; i < kRepeat_; i++) {
+    s.reserve(static_cast<std::size_t>(kRepeat) * pattern_.size());
+    for (int i = 0; i < kRepeat; i++) {
       s += pattern_;
     }
     int length = static_cast<int>(s.size());
     input_data_ = InType{length, s};
-    expectedResult_ = length;
+    expected_result_ = length;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return expectedResult_ == output_data;
+    return expected_result_ == output_data;
   }
 
   InType GetTestInputData() final {

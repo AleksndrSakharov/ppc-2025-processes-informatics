@@ -2,8 +2,6 @@
 
 #include <mpi.h>
 
-// #include <numeric>
-// #include <vector>
 #include <algorithm>
 #include <cctype>
 #include <utility>

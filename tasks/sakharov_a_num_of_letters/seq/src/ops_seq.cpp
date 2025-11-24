@@ -1,7 +1,5 @@
 #include "sakharov_a_num_of_letters/seq/include/ops_seq.hpp"
 
-// #include <numeric>
-// #include <vector>
 #include <cctype>
 #include <utility>
 
