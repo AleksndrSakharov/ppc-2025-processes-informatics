@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <algorithm>
 #include <array>
@@ -36,7 +35,7 @@ class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
     expected_output_ = 0;
     const std::string &str = std::get<1>(in);
     for (char c : str) {
-      if (isalpha(static_cast<unsigned char>(c)) != 0) {
+      if (std::isalpha(static_cast<unsigned char>(c)) != 0) {
         expected_output_++;
       }
     }
@@ -57,7 +56,7 @@ class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 
 namespace {
 
-TEST_P(SakharovARunFuncTestsProcesses, MatmulFromPic) {
+TEST_P(SakharovARunFuncTestsProcesses, CountLetters) {
   ExecuteTest(GetParam());
 }
 
@@ -77,7 +76,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = SakharovARunFuncTestsProcesses::PrintFuncTestName<SakharovARunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, SakharovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(CountLettersTests, SakharovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace
 

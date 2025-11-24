@@ -5,6 +5,7 @@
 // #include <numeric>
 // #include <vector>
 #include <algorithm>
+#include <cctype>
 #include <utility>
 #include <vector>
 
@@ -77,7 +78,7 @@ bool SakharovANumberOfLettersMPI::RunImpl() {
   int local_letters = 0;
   for (int i = 0; i < local_count; i++) {
     char c = local_buffer[i];
-    if (isalpha(static_cast<unsigned char>(c)) != 0) {
+    if (std::isalpha(static_cast<unsigned char>(c)) != 0) {
       local_letters++;
     }
   }
