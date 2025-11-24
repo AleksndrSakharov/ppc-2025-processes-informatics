@@ -2,8 +2,8 @@
 
 // #include <numeric>
 // #include <vector>
-#include <utility>
 #include <cctype>
+#include <utility>
 
 #include "sakharov_a_num_of_letters/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -17,7 +17,7 @@ SakharovANumberOfLettersSEQ::SakharovANumberOfLettersSEQ(const InType &in) {
 }
 
 bool SakharovANumberOfLettersSEQ::ValidationImpl() {
-  return std::cmp_equal(std::get<1>(GetInput()).size(), std::get<0>(GetInput())); 
+  return std::cmp_equal(std::get<1>(GetInput()).size(), std::get<0>(GetInput()));
 }
 
 bool SakharovANumberOfLettersSEQ::PreProcessingImpl() {

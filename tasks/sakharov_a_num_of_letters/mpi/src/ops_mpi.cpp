@@ -4,8 +4,8 @@
 
 // #include <numeric>
 // #include <vector>
-#include <utility>
 #include <algorithm>
+#include <utility>
 #include <vector>
 
 #include "sakharov_a_num_of_letters/common/include/common.hpp"
@@ -20,7 +20,7 @@ SakharovANumberOfLettersMPI::SakharovANumberOfLettersMPI(const InType &in) {
 }
 
 bool SakharovANumberOfLettersMPI::ValidationImpl() {
-  return std::cmp_equal(std::get<1>(GetInput()).size(), std::get<0>(GetInput())); 
+  return std::cmp_equal(std::get<1>(GetInput()).size(), std::get<0>(GetInput()));
 }
 
 bool SakharovANumberOfLettersMPI::PreProcessingImpl() {
@@ -71,8 +71,8 @@ bool SakharovANumberOfLettersMPI::RunImpl() {
 
   char *local_buffer = local_count > 0 ? local_string.data() : nullptr;
 
-  MPI_Scatterv(send_buffer, send_counts.data(), displs.data(), MPI_CHAR,
-               local_buffer, local_count, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(send_buffer, send_counts.data(), displs.data(), MPI_CHAR, local_buffer, local_count, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
 
   int local_letters = 0;
   for (int i = 0; i < local_count; i++) {

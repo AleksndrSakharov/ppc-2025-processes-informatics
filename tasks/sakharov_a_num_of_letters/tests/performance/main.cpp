@@ -7,7 +7,7 @@
 
 namespace sakharov_a_num_of_letters {
 
-  class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kRepeat_ = 10000000;
   const std::string pattern_ = "abcdABCD";
   InType input_data_{};
@@ -37,8 +37,9 @@ TEST_P(SakharovARunPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SakharovANumberOfLettersMPI, SakharovANumberOfLettersSEQ>(
-    PPC_SETTINGS_sakharov_a_num_of_letters);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, SakharovANumberOfLettersMPI, SakharovANumberOfLettersSEQ>(
+        PPC_SETTINGS_sakharov_a_num_of_letters);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

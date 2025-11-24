@@ -3,9 +3,9 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <cstddef>
 #include <cstdint>
-#include <cctype>
 #include <numeric>
 #include <stdexcept>
 #include <string>
