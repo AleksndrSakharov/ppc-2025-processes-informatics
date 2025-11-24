@@ -34,7 +34,7 @@ int CountLetters(const std::string &s) {
   for (char c : s) {
     if (std::isalpha(static_cast<unsigned char>(c)) != 0) {
       result++;
-    }
+    } 
   }
   return result;
 }
