@@ -1,10 +1,10 @@
 #include "sakharov_a_num_of_letters/seq/include/ops_seq.hpp"
 
 #include <cctype>
+#include <string>
 #include <utility>
 
 #include "sakharov_a_num_of_letters/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace sakharov_a_num_of_letters {
 

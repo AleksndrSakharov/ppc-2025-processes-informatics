@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "sakharov_a_num_of_letters/common/include/common.hpp"
 #include "sakharov_a_num_of_letters/mpi/include/ops_mpi.hpp"
@@ -45,7 +44,7 @@ class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
   OutType expected_output_ = 0;
 };
 

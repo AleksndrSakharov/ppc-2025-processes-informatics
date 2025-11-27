@@ -4,11 +4,11 @@
 
 #include <algorithm>
 #include <cctype>
+#include <string>
 #include <utility>
 #include <vector>
 
 #include "sakharov_a_num_of_letters/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace sakharov_a_num_of_letters {
 
@@ -38,13 +38,13 @@ bool SakharovANumberOfLettersMPI::RunImpl() {
   }
 
   int size_of_string = 0;
-  char *send_buffer = nullptr;
+  const char *send_buffer = nullptr;
 
   if (world_rank == 0) {
     size_of_string = std::get<0>(GetInput());
     const std::string &string_of_letters = std::get<1>(GetInput());
     if (size_of_string > 0) {
-      send_buffer = const_cast<char *>(string_of_letters.data());
+      send_buffer = string_of_letters.data();
     }
   }
 
@@ -59,9 +59,9 @@ bool SakharovANumberOfLettersMPI::RunImpl() {
 
   std::vector<int> send_counts(world_size);
   std::vector<int> displs(world_size);
-  for (int r = 0; r < world_size; r++) {
-    send_counts[r] = base_chunk + (r < remainder ? 1 : 0);
-    displs[r] = r * base_chunk + std::min(r, remainder);
+  for (int rank = 0; rank < world_size; rank++) {
+    send_counts[rank] = base_chunk + (rank < remainder ? 1 : 0);
+    displs[rank] = (rank * base_chunk) + std::min(rank, remainder);
   }
 
   int local_count = send_counts[world_rank];

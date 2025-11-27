@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <string>
+
 #include "sakharov_a_num_of_letters/common/include/common.hpp"
 #include "sakharov_a_num_of_letters/mpi/include/ops_mpi.hpp"
 #include "sakharov_a_num_of_letters/seq/include/ops_seq.hpp"
@@ -10,7 +13,7 @@ namespace sakharov_a_num_of_letters {
 class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr int kRepeat = 10000000;
   const std::string pattern_ = "abcdABCD";
-  InType input_data_{};
+  InType input_data_;
   OutType expected_result_ = 0;
 
   void SetUp() override {
