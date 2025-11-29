@@ -33,10 +33,6 @@ bool SakharovANumberOfLettersMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  if (world_size <= 0) {
-    return false;
-  }
-
   int size_of_string = 0;
   const char *send_buffer = nullptr;
 
@@ -49,10 +45,6 @@ bool SakharovANumberOfLettersMPI::RunImpl() {
   }
 
   MPI_Bcast(&size_of_string, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (size_of_string < 0) {
-    return false;
-  }
 
   int base_chunk = size_of_string / world_size;
   int remainder = size_of_string % world_size;
