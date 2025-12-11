@@ -1,3 +1,0 @@
-A B C D E
-A B X D E
-1
