@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <array>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include "sakharov_a_transmission_from_one_to_all/common/include/common.hpp"
 #include "sakharov_a_transmission_from_one_to_all/mpi/include/ops_mpi.hpp"
@@ -52,9 +52,10 @@ const std::array<TestType, 4> kTestParam = {
     TestType{InType{0, std::vector<int>(100, 1)}, "root_0_large"},
 };
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<SakharovATransmissionFromOneToAllMPI, InType>(kTestParam, PPC_SETTINGS_sakharov_a_transmission_from_one_to_all),
-    ppc::util::AddFuncTask<SakharovATransmissionFromOneToAllSEQ, InType>(kTestParam, PPC_SETTINGS_sakharov_a_transmission_from_one_to_all));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SakharovATransmissionFromOneToAllMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_sakharov_a_transmission_from_one_to_all),
+                                           ppc::util::AddFuncTask<SakharovATransmissionFromOneToAllSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_sakharov_a_transmission_from_one_to_all));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
