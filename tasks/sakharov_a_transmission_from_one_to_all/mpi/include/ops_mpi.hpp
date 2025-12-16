@@ -7,7 +7,7 @@
 
 namespace sakharov_a_transmission_from_one_to_all {
 
-int My_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
+int MyBcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
 
 class SakharovATransmissionFromOneToAllMPI : public BaseTask {
  public:
