@@ -1,13 +1,13 @@
-#include "sakharov_a_transmission_from_one_to_all/mpi/include/ops_mpi.hpp"
+#include "sakharov_a_cannon_algorithm/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
 
 #include <cmath>
 #include <vector>
 
-#include "sakharov_a_transmission_from_one_to_all/common/include/common.hpp"
+#include "sakharov_a_cannon_algorithm/common/include/common.hpp"
 
-namespace sakharov_a_transmission_from_one_to_all {
+namespace sakharov_a_cannon_algorithm {
 
 int MyBcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
   int rank = 0;
@@ -108,24 +108,24 @@ bool BroadcastDoubles(int root, int rank) {
 
 }  // namespace
 
-SakharovATransmissionFromOneToAllMPI::SakharovATransmissionFromOneToAllMPI(const InType &in) {
+SakharovACannonAlgorithmMPI::SakharovACannonAlgorithmMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
-bool SakharovATransmissionFromOneToAllMPI::ValidationImpl() {
+bool SakharovACannonAlgorithmMPI::ValidationImpl() {
   int root = std::get<0>(GetInput());
   int world_size = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   return root >= 0 && root < world_size;
 }
 
-bool SakharovATransmissionFromOneToAllMPI::PreProcessingImpl() {
+bool SakharovACannonAlgorithmMPI::PreProcessingImpl() {
   GetOutput().clear();
   return true;
 }
 
-bool SakharovATransmissionFromOneToAllMPI::RunImpl() {
+bool SakharovACannonAlgorithmMPI::RunImpl() {
   const int root = std::get<0>(GetInput());
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -147,8 +147,8 @@ bool SakharovATransmissionFromOneToAllMPI::RunImpl() {
   return true;
 }
 
-bool SakharovATransmissionFromOneToAllMPI::PostProcessingImpl() {
+bool SakharovACannonAlgorithmMPI::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace sakharov_a_transmission_from_one_to_all
+}  // namespace sakharov_a_cannon_algorithm

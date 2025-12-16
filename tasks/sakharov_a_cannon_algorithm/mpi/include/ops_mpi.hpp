@@ -2,19 +2,19 @@
 
 #include <mpi.h>
 
-#include "sakharov_a_transmission_from_one_to_all/common/include/common.hpp"
+#include "sakharov_a_cannon_algorithm/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace sakharov_a_transmission_from_one_to_all {
+namespace sakharov_a_cannon_algorithm {
 
 int MyBcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
 
-class SakharovATransmissionFromOneToAllMPI : public BaseTask {
+class SakharovACannonAlgorithmMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  explicit SakharovATransmissionFromOneToAllMPI(const InType &in);
+  explicit SakharovACannonAlgorithmMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -23,4 +23,4 @@ class SakharovATransmissionFromOneToAllMPI : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace sakharov_a_transmission_from_one_to_all
+}  // namespace sakharov_a_cannon_algorithm

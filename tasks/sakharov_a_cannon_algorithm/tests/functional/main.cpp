@@ -6,13 +6,13 @@
 #include <tuple>
 #include <vector>
 
-#include "sakharov_a_transmission_from_one_to_all/common/include/common.hpp"
-#include "sakharov_a_transmission_from_one_to_all/mpi/include/ops_mpi.hpp"
-#include "sakharov_a_transmission_from_one_to_all/seq/include/ops_seq.hpp"
+#include "sakharov_a_cannon_algorithm/common/include/common.hpp"
+#include "sakharov_a_cannon_algorithm/mpi/include/ops_mpi.hpp"
+#include "sakharov_a_cannon_algorithm/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace sakharov_a_transmission_from_one_to_all {
+namespace sakharov_a_cannon_algorithm {
 
 class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -54,10 +54,10 @@ const std::array<TestType, 4> kTestParam = {
     TestType{InType{0, std::vector<int>(100, 1)}, "root_0_large"},
 };
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SakharovATransmissionFromOneToAllMPI, InType>(
-                                               kTestParam, PPC_SETTINGS_sakharov_a_transmission_from_one_to_all),
-                                           ppc::util::AddFuncTask<SakharovATransmissionFromOneToAllSEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_sakharov_a_transmission_from_one_to_all));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SakharovACannonAlgorithmMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_sakharov_a_cannon_algorithm),
+                                           ppc::util::AddFuncTask<SakharovACannonAlgorithmSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_sakharov_a_cannon_algorithm));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -67,4 +67,4 @@ INSTANTIATE_TEST_SUITE_P(BroadcastTests, SakharovARunFuncTestsProcesses, kGtestV
 
 }  // namespace
 
-}  // namespace sakharov_a_transmission_from_one_to_all
+}  // namespace sakharov_a_cannon_algorithm
