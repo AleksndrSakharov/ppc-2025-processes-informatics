@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <tuple>
 #include <vector>
 
 #include "sakharov_a_transmission_from_one_to_all/common/include/common.hpp"
