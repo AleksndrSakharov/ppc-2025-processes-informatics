@@ -1,7 +1,5 @@
 #pragma once
 
-#include <mpi.h>
-
 #include "sakharov_a_cannon_algorithm/common/include/common.hpp"
 #include "task/include/task.hpp"
 

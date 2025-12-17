@@ -1,5 +1,7 @@
 #include "sakharov_a_cannon_algorithm/seq/include/ops_seq.hpp"
 
+#include <cstddef>
+
 #include "sakharov_a_cannon_algorithm/common/include/common.hpp"
 
 namespace sakharov_a_cannon_algorithm {

@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "sakharov_a_cannon_algorithm/common/include/common.hpp"
@@ -57,7 +58,7 @@ class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
     for (int i = 0; i < size; ++i) {
       for (int j = 0; j < size; ++j) {
         in.a[Offset(size, i, j)] = static_cast<double>((i + 1) * (j + 2));
-        in.b[Offset(size, i, j)] = static_cast<double>((i == j) ? 1.0 : (j % 3 + 1));
+        in.b[Offset(size, i, j)] = (i == j) ? 1.0 : static_cast<double>((j % 3) + 1);
       }
     }
 
