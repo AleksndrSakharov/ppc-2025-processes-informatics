@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <array>
 #include <cstddef>
 #include <string>
@@ -17,7 +18,7 @@ namespace sakharov_a_cannon_algorithm {
 class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<1>(test_param);
+    return std::get<2>(test_param);
   }
 
  protected:
@@ -25,11 +26,21 @@ class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     InType in = std::get<0>(params);
     input_data_ = in;
-    expected_output_ = std::get<1>(in);
+    expected_output_ = std::get<1>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return expected_output_ == output_data;
+    if (expected_output_.size() != output_data.size()) {
+      return false;
+    }
+
+    constexpr double kEps = 1e-9;
+    for (std::size_t i = 0; i < expected_output_.size(); ++i) {
+      if (std::abs(expected_output_[i] - output_data[i]) > kEps) {
+        return false;
+      }
+    }
+    return true;
   }
 
   InType GetTestInputData() final {
@@ -43,15 +54,41 @@ class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 
 namespace {
 
-TEST_P(SakharovARunFuncTestsProcesses, Broadcast) {
+OutType NaiveMultiply(const InType &input) {
+  const int n = input.size;
+  OutType result(static_cast<std::size_t>(n) * static_cast<std::size_t>(n), 0.0);
+
+  for (int i = 0; i < n; ++i) {
+    for (int k = 0; k < n; ++k) {
+      const double a_val = input.a[Offset(n, i, k)];
+      for (int j = 0; j < n; ++j) {
+        result[Offset(n, i, j)] += a_val * input.b[Offset(n, k, j)];
+      }
+    }
+  }
+
+  return result;
+}
+
+TestType MakeCase(const InType &input, const std::string &name) {
+  return TestType{input, NaiveMultiply(input), name};
+}
+
+TEST_P(SakharovARunFuncTestsProcesses, MatrixMultiply) {
   ExecuteTest(GetParam());
 }
 
 const std::array<TestType, 4> kTestParam = {
-    TestType{InType{0, {1, 2, 3, 4, 5}}, "root_0_simple"},
-    TestType{InType{0, {}}, "root_0_empty"},
-    TestType{InType{0, {10, 20, 30}}, "root_0_small"},
-    TestType{InType{0, std::vector<int>(100, 1)}, "root_0_large"},
+    MakeCase(InType{1, {2.0}, {3.0}}, "single_element"),
+    MakeCase(InType{2, {1.0, 2.0, 3.0, 4.0}, {5.0, 6.0, 7.0, 8.0}}, "two_by_two"),
+    MakeCase(InType{3,
+                    {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0},
+                    {4.0, 1.0, 2.0, 0.0, 3.0, 5.0, -1.0, 7.0, 2.0}},
+             "identity_multiplies"),
+    MakeCase(InType{4,
+                    {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0},
+                    {1.0, 0.0, 2.0, -1.0, 3.0, 1.0, 0.0, 2.0, 1.0, 4.0, -2.0, 0.0, 0.0, 1.0, 3.0, 2.0}},
+             "four_by_four_blocked")
 };
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SakharovACannonAlgorithmMPI, InType>(
@@ -63,7 +100,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = SakharovARunFuncTestsProcesses::PrintFuncTestName<SakharovARunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(BroadcastTests, SakharovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(MatrixTests, SakharovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace
 

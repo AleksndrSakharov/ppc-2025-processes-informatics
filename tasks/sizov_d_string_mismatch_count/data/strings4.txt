@@ -1,3 +1,0 @@
-X_BCD_Y
-A_BCD Z
-3

@@ -1,7 +1,5 @@
 #include "sakharov_a_cannon_algorithm/seq/include/ops_seq.hpp"
 
-#include <vector>
-
 #include "sakharov_a_cannon_algorithm/common/include/common.hpp"
 
 namespace sakharov_a_cannon_algorithm {
@@ -12,16 +10,18 @@ SakharovACannonAlgorithmSEQ::SakharovACannonAlgorithmSEQ(const InType &in) {
 }
 
 bool SakharovACannonAlgorithmSEQ::ValidationImpl() {
-  return std::get<0>(GetInput()) == 0;
+  return HasValidShape(GetInput());
 }
 
 bool SakharovACannonAlgorithmSEQ::PreProcessingImpl() {
-  GetOutput().clear();
+  const int n = GetInput().size;
+  GetOutput().assign(static_cast<std::size_t>(n) * static_cast<std::size_t>(n), 0.0);
   return true;
 }
 
 bool SakharovACannonAlgorithmSEQ::RunImpl() {
-  GetOutput() = std::get<1>(GetInput());
+  const int block_size = SelectBlockSize(GetInput().size);
+  GetOutput() = BlockMultiply(GetInput(), block_size);
   return true;
 }
 

@@ -7,8 +7,6 @@
 
 namespace sakharov_a_cannon_algorithm {
 
-int MyBcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
-
 class SakharovACannonAlgorithmMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {

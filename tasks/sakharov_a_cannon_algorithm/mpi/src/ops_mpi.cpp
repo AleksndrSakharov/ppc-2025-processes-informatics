@@ -2,108 +2,75 @@
 
 #include <mpi.h>
 
+#include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "sakharov_a_cannon_algorithm/common/include/common.hpp"
 
 namespace sakharov_a_cannon_algorithm {
 
-int MyBcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
-  int rank = 0;
-  int size = 0;
-  MPI_Comm_rank(comm, &rank);
-  MPI_Comm_size(comm, &size);
-
-  int v_rank = (rank - root + size) % size;
-
-  if (v_rank != 0) {
-    int v_parent = (v_rank - 1) / 2;
-    int real_parent = (v_parent + root) % size;
-    MPI_Recv(buffer, count, datatype, real_parent, 0, comm, MPI_STATUS_IGNORE);
-  }
-
-  int v_child1 = (2 * v_rank) + 1;
-  if (v_child1 < size) {
-    int real_child1 = (v_child1 + root) % size;
-    MPI_Send(buffer, count, datatype, real_child1, 0, comm);
-  }
-
-  int v_child2 = (2 * v_rank) + 2;
-  if (v_child2 < size) {
-    int real_child2 = (v_child2 + root) % size;
-    MPI_Send(buffer, count, datatype, real_child2, 0, comm);
-  }
-
-  return MPI_SUCCESS;
-}
-
 namespace {
 
-bool BroadcastInts(int root, int rank, const InType &input, std::vector<int> &data_out) {
-  std::vector<int> data;
-  int count = 0;
-
-  if (rank == root) {
-    data = std::get<1>(input);
-    count = static_cast<int>(data.size());
-  }
-
-  MyBcast(&count, 1, MPI_INT, root, MPI_COMM_WORLD);
-
-  if (rank != root) {
-    data.resize(count);
-  }
-
-  MyBcast(data.data(), count, MPI_INT, root, MPI_COMM_WORLD);
-  data_out = data;
-  return true;
+int ComputeGridDim(int world_size) {
+  const int dim = static_cast<int>(std::sqrt(static_cast<double>(world_size)));
+  return dim;
 }
 
-bool BroadcastFloats(int root, int rank) {
-  std::vector<float> float_data;
-  constexpr int kFloatCount = 100;
+void CopyBlock(const std::vector<double> &src, int matrix_size, int block_size, int block_row, int block_col,
+               std::vector<double> &dst) {
+  dst.assign(static_cast<std::size_t>(block_size) * static_cast<std::size_t>(block_size), 0.0);
 
-  if (rank == root) {
-    float_data.resize(kFloatCount);
-    for (int i = 0; i < kFloatCount; ++i) {
-      float_data[i] = static_cast<float>(i) + 0.5F;
-    }
-  } else {
-    float_data.resize(kFloatCount);
+  const int row_offset = block_row * block_size;
+  const int col_offset = block_col * block_size;
+
+  for (int r = 0; r < block_size; ++r) {
+    const int global_row = row_offset + r;
+    const std::size_t src_offset = Offset(matrix_size, global_row, col_offset);
+    std::copy_n(src.begin() + static_cast<std::ptrdiff_t>(src_offset), block_size,
+                dst.begin() + static_cast<std::ptrdiff_t>(r * block_size));
   }
-
-  MyBcast(float_data.data(), kFloatCount, MPI_FLOAT, root, MPI_COMM_WORLD);
-
-  for (int i = 0; i < kFloatCount; ++i) {
-    if (std::abs(float_data[i] - (static_cast<float>(i) + 0.5F)) > 1e-5F) {
-      return false;
-    }
-  }
-  return true;
 }
 
-bool BroadcastDoubles(int root, int rank) {
-  std::vector<double> double_data;
-  constexpr int kDoubleCount = 100;
-
-  if (rank == root) {
-    double_data.resize(kDoubleCount);
-    for (int i = 0; i < kDoubleCount; ++i) {
-      double_data[i] = static_cast<double>(i) + 0.123;
-    }
-  } else {
-    double_data.resize(kDoubleCount);
-  }
-
-  MyBcast(double_data.data(), kDoubleCount, MPI_DOUBLE, root, MPI_COMM_WORLD);
-
-  for (int i = 0; i < kDoubleCount; ++i) {
-    if (std::abs(double_data[i] - (static_cast<double>(i) + 0.123)) > 1e-9) {
-      return false;
+void MultiplyLocal(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c, int block_size) {
+  for (int i = 0; i < block_size; ++i) {
+    const int row_offset = i * block_size;
+    for (int k = 0; k < block_size; ++k) {
+      const double a_val = a[row_offset + k];
+      const int b_row_offset = k * block_size;
+      for (int j = 0; j < block_size; ++j) {
+        c[row_offset + j] += a_val * b[b_row_offset + j];
+      }
     }
   }
-  return true;
+}
+
+void PlaceBlock(const std::vector<double> &block, int block_size, int block_row, int block_col, int matrix_size,
+                std::vector<double> &dst) {
+  const int start_row = block_row * block_size;
+  const int start_col = block_col * block_size;
+
+  for (int r = 0; r < block_size; ++r) {
+    const std::size_t dst_offset = Offset(matrix_size, start_row + r, start_col);
+    std::copy_n(block.begin() + static_cast<std::ptrdiff_t>(r * block_size), block_size,
+                dst.begin() + static_cast<std::ptrdiff_t>(dst_offset));
+  }
+}
+
+void ShiftLeft(MPI_Comm cart_comm, std::vector<double> &block, int block_elems) {
+  int src_left = MPI_PROC_NULL;
+  int dst_left = MPI_PROC_NULL;
+  MPI_Cart_shift(cart_comm, 1, -1, &src_left, &dst_left);
+  MPI_Sendrecv_replace(block.data(), block_elems, MPI_DOUBLE, dst_left, 0, src_left, 0, cart_comm,
+                       MPI_STATUS_IGNORE);
+}
+
+void ShiftUp(MPI_Comm cart_comm, std::vector<double> &block, int block_elems) {
+  int src_up = MPI_PROC_NULL;
+  int dst_up = MPI_PROC_NULL;
+  MPI_Cart_shift(cart_comm, 0, -1, &src_up, &dst_up);
+  MPI_Sendrecv_replace(block.data(), block_elems, MPI_DOUBLE, dst_up, 0, src_up, 0, cart_comm, MPI_STATUS_IGNORE);
 }
 
 }  // namespace
@@ -114,36 +81,118 @@ SakharovACannonAlgorithmMPI::SakharovACannonAlgorithmMPI(const InType &in) {
 }
 
 bool SakharovACannonAlgorithmMPI::ValidationImpl() {
-  int root = std::get<0>(GetInput());
-  int world_size = 0;
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-  return root >= 0 && root < world_size;
+  return HasValidShape(GetInput());
 }
 
 bool SakharovACannonAlgorithmMPI::PreProcessingImpl() {
-  GetOutput().clear();
+  const int n = GetInput().size;
+  GetOutput().assign(static_cast<std::size_t>(n) * static_cast<std::size_t>(n), 0.0);
   return true;
 }
 
 bool SakharovACannonAlgorithmMPI::RunImpl() {
-  const int root = std::get<0>(GetInput());
+  const int n = GetInput().size;
+
+  int world_size = 1;
   int rank = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  std::vector<int> data;
-  if (!BroadcastInts(root, rank, GetInput(), data)) {
-    return false;
+  if (world_size == 1) {
+    const int block_size = SelectBlockSize(n);
+    GetOutput() = BlockMultiply(GetInput(), block_size);
+    return true;
   }
 
-  if (!BroadcastFloats(root, rank)) {
-    return false;
+  const int grid_dim = ComputeGridDim(world_size);
+  const bool is_square_grid = grid_dim * grid_dim == world_size;
+  const bool divisible = (n % grid_dim == 0) && grid_dim > 0;
+
+  if (!is_square_grid || !divisible) {
+    if (rank == 0) {
+      const int block_size = SelectBlockSize(n);
+      GetOutput() = BlockMultiply(GetInput(), block_size);
+    }
+
+    MPI_Bcast(GetOutput().data(), static_cast<int>(GetOutput().size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    return true;
   }
 
-  if (!BroadcastDoubles(root, rank)) {
-    return false;
+  MPI_Comm cart_comm = MPI_COMM_NULL;
+  const int dims[2] = {grid_dim, grid_dim};
+  const int periods[2] = {1, 1};
+  MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, 1, &cart_comm);
+
+  int coords[2] = {0, 0};
+  MPI_Cart_coords(cart_comm, rank, 2, coords);
+  const int block_size = n / grid_dim;
+  const int block_elems = block_size * block_size;
+
+  std::vector<double> a_block(static_cast<std::size_t>(block_elems));
+  std::vector<double> b_block(static_cast<std::size_t>(block_elems));
+  std::vector<double> c_block(static_cast<std::size_t>(block_elems), 0.0);
+
+  if (rank == 0) {
+    for (int r = 0; r < grid_dim; ++r) {
+      for (int c = 0; c < grid_dim; ++c) {
+        std::vector<double> tmp_a;
+        std::vector<double> tmp_b;
+        CopyBlock(GetInput().a, n, block_size, r, c, tmp_a);
+        CopyBlock(GetInput().b, n, block_size, r, c, tmp_b);
+
+        int dest_rank = 0;
+        int dest_coords[2] = {r, c};
+        MPI_Cart_rank(cart_comm, dest_coords, &dest_rank);
+
+        if (dest_rank == 0) {
+          a_block = std::move(tmp_a);
+          b_block = std::move(tmp_b);
+        } else {
+          MPI_Send(tmp_a.data(), block_elems, MPI_DOUBLE, dest_rank, 0, MPI_COMM_WORLD);
+          MPI_Send(tmp_b.data(), block_elems, MPI_DOUBLE, dest_rank, 1, MPI_COMM_WORLD);
+        }
+      }
+    }
+  } else {
+    MPI_Recv(a_block.data(), block_elems, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(b_block.data(), block_elems, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 
-  GetOutput() = data;
+  // Initial alignment: shift A left by row index and B up by column index.
+  for (int i = 0; i < coords[0]; ++i) {
+    ShiftLeft(cart_comm, a_block, block_elems);
+  }
+  for (int j = 0; j < coords[1]; ++j) {
+    ShiftUp(cart_comm, b_block, block_elems);
+  }
+
+  for (int step = 0; step < grid_dim; ++step) {
+    MultiplyLocal(a_block, b_block, c_block, block_size);
+    ShiftLeft(cart_comm, a_block, block_elems);
+    ShiftUp(cart_comm, b_block, block_elems);
+  }
+
+  if (rank == 0) {
+    PlaceBlock(c_block, block_size, coords[0], coords[1], n, GetOutput());
+
+    for (int src = 1; src < world_size; ++src) {
+      std::vector<double> tmp(static_cast<std::size_t>(block_elems));
+      MPI_Recv(tmp.data(), block_elems, MPI_DOUBLE, src, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+      int src_coords[2] = {0, 0};
+      MPI_Cart_coords(cart_comm, src, 2, src_coords);
+      PlaceBlock(tmp, block_size, src_coords[0], src_coords[1], n, GetOutput());
+    }
+  } else {
+    MPI_Send(c_block.data(), block_elems, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
+  }
+
+  MPI_Bcast(GetOutput().data(), static_cast<int>(GetOutput().size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  if (cart_comm != MPI_COMM_NULL) {
+    MPI_Comm_free(&cart_comm);
+  }
+
   return true;
 }
 
