@@ -3,6 +3,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <ostream>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -16,7 +17,7 @@
 // Avoid gtest dumping raw std::function bytes from FuncTestParam, which triggers valgrind UMRs.
 namespace ppc::util {
 template <typename InType, typename OutType, typename TestType>
-void PrintTo(const FuncTestParam<InType, OutType, TestType> &param, ::std::ostream *os) {
+static inline void PrintTo(const FuncTestParam<InType, OutType, TestType> &param, ::std::ostream *os) {
   *os << "FuncTestParam{"
       << "name=" << std::get<static_cast<std::size_t>(GTestParamIndex::kNameTest)>(param) << "}";
 }
