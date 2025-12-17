@@ -11,6 +11,15 @@
 #include "sakharov_a_cannon_algorithm/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
+// Prevent gtest from printing std::function internals in PerfTestParam and causing valgrind noise.
+namespace ppc::util {
+template <typename InType, typename OutType>
+void PrintTo(const PerfTestParam<InType, OutType> &param, ::std::ostream *os) {
+  *os << "PerfTestParam{"
+      << "name=" << std::get<static_cast<std::size_t>(GTestParamIndex::kNameTest)>(param) << "}";
+}
+}  // namespace ppc::util
+
 namespace sakharov_a_cannon_algorithm {
 
 class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {

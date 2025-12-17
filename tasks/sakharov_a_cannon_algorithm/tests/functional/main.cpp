@@ -13,6 +13,15 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
+// Avoid gtest dumping raw std::function bytes from FuncTestParam, which triggers valgrind UMRs.
+namespace ppc::util {
+template <typename InType, typename OutType, typename TestType>
+void PrintTo(const FuncTestParam<InType, OutType, TestType> &param, ::std::ostream *os) {
+  *os << "FuncTestParam{"
+      << "name=" << std::get<static_cast<std::size_t>(GTestParamIndex::kNameTest)>(param) << "}";
+}
+}  // namespace ppc::util
+
 namespace sakharov_a_cannon_algorithm {
 
 class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
