@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <cmath>
-#include <mpi.h>
 #include <vector>
 
 #include "sakharov_a_cannon_algorithm/common/include/common.hpp"
@@ -44,7 +44,7 @@ class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
     int world_size = 1;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     const int grid_dim = std::max(1, static_cast<int>(std::sqrt(static_cast<double>(world_size))));
-    constexpr int kBlock = 16;
+    constexpr int kBlock = 128;
     return grid_dim * kBlock;
   }
 

@@ -62,8 +62,7 @@ void ShiftLeft(MPI_Comm cart_comm, std::vector<double> &block, int block_elems) 
   int src_left = MPI_PROC_NULL;
   int dst_left = MPI_PROC_NULL;
   MPI_Cart_shift(cart_comm, 1, -1, &src_left, &dst_left);
-  MPI_Sendrecv_replace(block.data(), block_elems, MPI_DOUBLE, dst_left, 0, src_left, 0, cart_comm,
-                       MPI_STATUS_IGNORE);
+  MPI_Sendrecv_replace(block.data(), block_elems, MPI_DOUBLE, dst_left, 0, src_left, 0, cart_comm, MPI_STATUS_IGNORE);
 }
 
 void ShiftUp(MPI_Comm cart_comm, std::vector<double> &block, int block_elems) {
@@ -71,6 +70,26 @@ void ShiftUp(MPI_Comm cart_comm, std::vector<double> &block, int block_elems) {
   int dst_up = MPI_PROC_NULL;
   MPI_Cart_shift(cart_comm, 0, -1, &src_up, &dst_up);
   MPI_Sendrecv_replace(block.data(), block_elems, MPI_DOUBLE, dst_up, 0, src_up, 0, cart_comm, MPI_STATUS_IGNORE);
+}
+
+void ShiftLeftN(MPI_Comm cart_comm, std::vector<double> &block, int block_elems, int steps) {
+  if (steps == 0) {
+    return;
+  }
+  int src = MPI_PROC_NULL;
+  int dst = MPI_PROC_NULL;
+  MPI_Cart_shift(cart_comm, 1, -steps, &src, &dst);
+  MPI_Sendrecv_replace(block.data(), block_elems, MPI_DOUBLE, dst, 0, src, 0, cart_comm, MPI_STATUS_IGNORE);
+}
+
+void ShiftUpN(MPI_Comm cart_comm, std::vector<double> &block, int block_elems, int steps) {
+  if (steps == 0) {
+    return;
+  }
+  int src = MPI_PROC_NULL;
+  int dst = MPI_PROC_NULL;
+  MPI_Cart_shift(cart_comm, 0, -steps, &src, &dst);
+  MPI_Sendrecv_replace(block.data(), block_elems, MPI_DOUBLE, dst, 0, src, 0, cart_comm, MPI_STATUS_IGNORE);
 }
 
 }  // namespace
@@ -105,26 +124,38 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
   }
 
   const int grid_dim = ComputeGridDim(world_size);
-  const bool is_square_grid = grid_dim * grid_dim == world_size;
-  const bool divisible = (n % grid_dim == 0) && grid_dim > 0;
+  const int active = grid_dim * grid_dim;
+  const bool divisible = (grid_dim > 0) && (n % grid_dim == 0);
+  const bool participate = divisible && rank < active;
 
-  if (!is_square_grid || !divisible) {
+  MPI_Comm sub_comm = MPI_COMM_NULL;
+  if (participate) {
+    MPI_Comm_split(MPI_COMM_WORLD, 1, rank, &sub_comm);
+  } else {
+    MPI_Comm_split(MPI_COMM_WORLD, MPI_UNDEFINED, rank, &sub_comm);
+  }
+
+  if (!participate) {
     if (rank == 0) {
       const int block_size = SelectBlockSize(n);
       GetOutput() = BlockMultiply(GetInput(), block_size);
     }
-
     MPI_Bcast(GetOutput().data(), static_cast<int>(GetOutput().size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
     return true;
   }
 
+  int sub_rank = 0;
+  int sub_size = 0;
+  MPI_Comm_rank(sub_comm, &sub_rank);
+  MPI_Comm_size(sub_comm, &sub_size);
+
   MPI_Comm cart_comm = MPI_COMM_NULL;
   const int dims[2] = {grid_dim, grid_dim};
   const int periods[2] = {1, 1};
-  MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, 1, &cart_comm);
+  MPI_Cart_create(sub_comm, 2, dims, periods, 1, &cart_comm);
 
   int coords[2] = {0, 0};
-  MPI_Cart_coords(cart_comm, rank, 2, coords);
+  MPI_Cart_coords(cart_comm, sub_rank, 2, coords);
   const int block_size = n / grid_dim;
   const int block_elems = block_size * block_size;
 
@@ -132,7 +163,12 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
   std::vector<double> b_block(static_cast<std::size_t>(block_elems));
   std::vector<double> c_block(static_cast<std::size_t>(block_elems), 0.0);
 
-  if (rank == 0) {
+  std::vector<double> send_a;
+  std::vector<double> send_b;
+  if (sub_rank == 0) {
+    send_a.resize(static_cast<std::size_t>(sub_size) * static_cast<std::size_t>(block_elems));
+    send_b.resize(static_cast<std::size_t>(sub_size) * static_cast<std::size_t>(block_elems));
+
     for (int r = 0; r < grid_dim; ++r) {
       for (int c = 0; c < grid_dim; ++c) {
         std::vector<double> tmp_a;
@@ -140,31 +176,20 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
         CopyBlock(GetInput().a, n, block_size, r, c, tmp_a);
         CopyBlock(GetInput().b, n, block_size, r, c, tmp_b);
 
-        int dest_rank = 0;
-        int dest_coords[2] = {r, c};
-        MPI_Cart_rank(cart_comm, dest_coords, &dest_rank);
-
-        if (dest_rank == 0) {
-          a_block = std::move(tmp_a);
-          b_block = std::move(tmp_b);
-        } else {
-          MPI_Send(tmp_a.data(), block_elems, MPI_DOUBLE, dest_rank, 0, MPI_COMM_WORLD);
-          MPI_Send(tmp_b.data(), block_elems, MPI_DOUBLE, dest_rank, 1, MPI_COMM_WORLD);
-        }
+        const int dest = r * grid_dim + c;
+        auto offset = static_cast<std::size_t>(dest) * static_cast<std::size_t>(block_elems);
+        std::copy(tmp_a.begin(), tmp_a.end(), send_a.begin() + static_cast<std::ptrdiff_t>(offset));
+        std::copy(tmp_b.begin(), tmp_b.end(), send_b.begin() + static_cast<std::ptrdiff_t>(offset));
       }
     }
-  } else {
-    MPI_Recv(a_block.data(), block_elems, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Recv(b_block.data(), block_elems, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 
-  // Initial alignment: shift A left by row index and B up by column index.
-  for (int i = 0; i < coords[0]; ++i) {
-    ShiftLeft(cart_comm, a_block, block_elems);
-  }
-  for (int j = 0; j < coords[1]; ++j) {
-    ShiftUp(cart_comm, b_block, block_elems);
-  }
+  MPI_Scatter(send_a.data(), block_elems, MPI_DOUBLE, a_block.data(), block_elems, MPI_DOUBLE, 0, sub_comm);
+  MPI_Scatter(send_b.data(), block_elems, MPI_DOUBLE, b_block.data(), block_elems, MPI_DOUBLE, 0, sub_comm);
+
+  // Initial alignment: shift A left by row index and B up by column index in one hop each.
+  ShiftLeftN(cart_comm, a_block, block_elems, coords[0]);
+  ShiftUpN(cart_comm, b_block, block_elems, coords[1]);
 
   for (int step = 0; step < grid_dim; ++step) {
     MultiplyLocal(a_block, b_block, c_block, block_size);
@@ -172,25 +197,31 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
     ShiftUp(cart_comm, b_block, block_elems);
   }
 
-  if (rank == 0) {
-    PlaceBlock(c_block, block_size, coords[0], coords[1], n, GetOutput());
+  std::vector<double> gathered;
+  if (sub_rank == 0) {
+    gathered.resize(static_cast<std::size_t>(sub_size) * static_cast<std::size_t>(block_elems));
+  }
 
-    for (int src = 1; src < world_size; ++src) {
-      std::vector<double> tmp(static_cast<std::size_t>(block_elems));
-      MPI_Recv(tmp.data(), block_elems, MPI_DOUBLE, src, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Gather(c_block.data(), block_elems, MPI_DOUBLE, gathered.data(), block_elems, MPI_DOUBLE, 0, sub_comm);
 
-      int src_coords[2] = {0, 0};
-      MPI_Cart_coords(cart_comm, src, 2, src_coords);
-      PlaceBlock(tmp, block_size, src_coords[0], src_coords[1], n, GetOutput());
+  if (sub_rank == 0) {
+    for (int idx = 0; idx < sub_size; ++idx) {
+      const int r = idx / grid_dim;
+      const int c = idx % grid_dim;
+      const auto offset = static_cast<std::size_t>(idx) * static_cast<std::size_t>(block_elems);
+      std::vector<double> tmp(block_elems);
+      std::copy_n(gathered.begin() + static_cast<std::ptrdiff_t>(offset), block_elems, tmp.begin());
+      PlaceBlock(tmp, block_size, r, c, n, GetOutput());
     }
-  } else {
-    MPI_Send(c_block.data(), block_elems, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
   }
 
   MPI_Bcast(GetOutput().data(), static_cast<int>(GetOutput().size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   if (cart_comm != MPI_COMM_NULL) {
     MPI_Comm_free(&cart_comm);
+  }
+  if (sub_comm != MPI_COMM_NULL) {
+    MPI_Comm_free(&sub_comm);
   }
 
   return true;

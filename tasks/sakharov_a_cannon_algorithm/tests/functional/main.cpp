@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <cmath>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <string>
 #include <tuple>
@@ -81,20 +81,16 @@ TEST_P(SakharovARunFuncTestsProcesses, MatrixMultiply) {
 const std::array<TestType, 4> kTestParam = {
     MakeCase(InType{1, {2.0}, {3.0}}, "single_element"),
     MakeCase(InType{2, {1.0, 2.0, 3.0, 4.0}, {5.0, 6.0, 7.0, 8.0}}, "two_by_two"),
-    MakeCase(InType{3,
-                    {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0},
-                    {4.0, 1.0, 2.0, 0.0, 3.0, 5.0, -1.0, 7.0, 2.0}},
+    MakeCase(InType{3, {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0}, {4.0, 1.0, 2.0, 0.0, 3.0, 5.0, -1.0, 7.0, 2.0}},
              "identity_multiplies"),
     MakeCase(InType{4,
                     {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0},
                     {1.0, 0.0, 2.0, -1.0, 3.0, 1.0, 0.0, 2.0, 1.0, 4.0, -2.0, 0.0, 0.0, 1.0, 3.0, 2.0}},
-             "four_by_four_blocked")
-};
+             "four_by_four_blocked")};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SakharovACannonAlgorithmMPI, InType>(
-                                               kTestParam, PPC_SETTINGS_sakharov_a_cannon_algorithm),
-                                           ppc::util::AddFuncTask<SakharovACannonAlgorithmSEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_sakharov_a_cannon_algorithm));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<SakharovACannonAlgorithmMPI, InType>(kTestParam, PPC_SETTINGS_sakharov_a_cannon_algorithm),
+    ppc::util::AddFuncTask<SakharovACannonAlgorithmSEQ, InType>(kTestParam, PPC_SETTINGS_sakharov_a_cannon_algorithm));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
