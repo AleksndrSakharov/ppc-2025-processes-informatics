@@ -10,10 +10,10 @@
 namespace sakharov_a_cannon_algorithm {
 
 struct MatrixInput {
-  int rows_a;
-  int cols_a;
-  int rows_b;
-  int cols_b;
+  int rows_a = 0;
+  int cols_a = 0;
+  int rows_b = 0;
+  int cols_b = 0;
   std::vector<double> a;
   std::vector<double> b;
 };
@@ -24,10 +24,10 @@ using TestType = std::tuple<MatrixInput, OutType, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 inline std::size_t Idx(int cols, int row, int col) {
-  return static_cast<std::size_t>(row) * static_cast<std::size_t>(cols) + static_cast<std::size_t>(col);
+  return (static_cast<std::size_t>(row) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(col);
 }
 
-inline bool IsValidInput(const MatrixInput &input) {
+inline bool IsValidInput(const MatrixInput& input) {
   if (input.rows_a <= 0 || input.cols_a <= 0 || input.rows_b <= 0 || input.cols_b <= 0) {
     return false;
   }

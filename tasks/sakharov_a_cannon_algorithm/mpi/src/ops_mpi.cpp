@@ -2,7 +2,6 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cstddef>
 #include <vector>
 
@@ -12,14 +11,28 @@ namespace sakharov_a_cannon_algorithm {
 
 namespace {
 
-void LocalMultiply(const std::vector<double> &a_block, const std::vector<double> &b_block, std::vector<double> &c_block,
-                   int local_rows, int k_dim, int local_cols) {
-  for (int i = 0; i < local_rows; ++i) {
-    for (int p = 0; p < k_dim; ++p) {
-      double a_val = a_block[static_cast<std::size_t>(i) * static_cast<std::size_t>(k_dim) + p];
-      for (int j = 0; j < local_cols; ++j) {
-        c_block[static_cast<std::size_t>(i) * static_cast<std::size_t>(local_cols) + j] +=
-            a_val * b_block[static_cast<std::size_t>(p) * static_cast<std::size_t>(local_cols) + j];
+void LocalMultiply(const std::vector<double>& a_block, const std::vector<double>& b_block,
+                   std::vector<double>& c_block, int local_rows, int k_dim, int local_cols) {
+  for (int ii = 0; ii < local_rows; ++ii) {
+    for (int kk = 0; kk < k_dim; ++kk) {
+      double a_val = a_block[(static_cast<std::size_t>(ii) * static_cast<std::size_t>(k_dim)) + kk];
+      for (int jj = 0; jj < local_cols; ++jj) {
+        c_block[(static_cast<std::size_t>(ii) * static_cast<std::size_t>(local_cols)) + jj] +=
+            a_val * b_block[(static_cast<std::size_t>(kk) * static_cast<std::size_t>(local_cols)) + jj];
+      }
+    }
+  }
+}
+
+void SequentialMultiply(const MatrixInput& input, std::vector<double>& output) {
+  const int m = input.rows_a;
+  const int k = input.cols_a;
+  const int n = input.cols_b;
+  for (int ii = 0; ii < m; ++ii) {
+    for (int kk = 0; kk < k; ++kk) {
+      double a_val = input.a[Idx(k, ii, kk)];
+      for (int jj = 0; jj < n; ++jj) {
+        output[Idx(n, ii, jj)] += a_val * input.b[Idx(n, kk, jj)];
       }
     }
   }
@@ -27,17 +40,15 @@ void LocalMultiply(const std::vector<double> &a_block, const std::vector<double>
 
 }  // namespace
 
-SakharovACannonAlgorithmMPI::SakharovACannonAlgorithmMPI(const InType &in) {
+SakharovACannonAlgorithmMPI::SakharovACannonAlgorithmMPI(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
-bool SakharovACannonAlgorithmMPI::ValidationImpl() {
-  return IsValidInput(GetInput());
-}
+bool SakharovACannonAlgorithmMPI::ValidationImpl() { return IsValidInput(GetInput()); }
 
 bool SakharovACannonAlgorithmMPI::PreProcessingImpl() {
-  const auto &input = GetInput();
+  const auto& input = GetInput();
   auto out_size = static_cast<std::size_t>(input.rows_a) * static_cast<std::size_t>(input.cols_b);
   GetOutput().assign(out_size, 0.0);
   return true;
@@ -49,21 +60,13 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  const auto &input = GetInput();
+  const auto& input = GetInput();
   const int m = input.rows_a;
   const int k = input.cols_a;
   const int n = input.cols_b;
 
   if (world_size == 1) {
-    auto &output = GetOutput();
-    for (int i = 0; i < m; ++i) {
-      for (int p = 0; p < k; ++p) {
-        double a_val = input.a[Idx(k, i, p)];
-        for (int j = 0; j < n; ++j) {
-          output[Idx(n, i, j)] += a_val * input.b[Idx(n, p, j)];
-        }
-      }
-    }
+    SequentialMultiply(input, GetOutput());
     return true;
   }
 
@@ -73,10 +76,10 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
   std::vector<int> row_counts(world_size);
   std::vector<int> row_displs(world_size);
   int offset = 0;
-  for (int i = 0; i < world_size; ++i) {
-    row_counts[i] = base_rows + (i < extra_rows ? 1 : 0);
-    row_displs[i] = offset;
-    offset += row_counts[i];
+  for (int idx = 0; idx < world_size; ++idx) {
+    row_counts[idx] = base_rows + (idx < extra_rows ? 1 : 0);
+    row_displs[idx] = offset;
+    offset += row_counts[idx];
   }
 
   int local_rows = row_counts[rank];
@@ -86,9 +89,9 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
 
   std::vector<int> send_counts_a(world_size);
   std::vector<int> displs_a(world_size);
-  for (int i = 0; i < world_size; ++i) {
-    send_counts_a[i] = row_counts[i] * k;
-    displs_a[i] = row_displs[i] * k;
+  for (int idx = 0; idx < world_size; ++idx) {
+    send_counts_a[idx] = row_counts[idx] * k;
+    displs_a[idx] = row_displs[idx] * k;
   }
 
   MPI_Scatterv(input.a.data(), send_counts_a.data(), displs_a.data(), MPI_DOUBLE, local_a.data(), local_rows * k,
@@ -106,9 +109,9 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
 
   std::vector<int> recv_counts_c(world_size);
   std::vector<int> displs_c(world_size);
-  for (int i = 0; i < world_size; ++i) {
-    recv_counts_c[i] = row_counts[i] * n;
-    displs_c[i] = row_displs[i] * n;
+  for (int idx = 0; idx < world_size; ++idx) {
+    recv_counts_c[idx] = row_counts[idx] * n;
+    displs_c[idx] = row_displs[idx] * n;
   }
 
   MPI_Gatherv(local_c.data(), local_rows * n, MPI_DOUBLE, GetOutput().data(), recv_counts_c.data(), displs_c.data(),
@@ -119,8 +122,6 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
   return true;
 }
 
-bool SakharovACannonAlgorithmMPI::PostProcessingImpl() {
-  return true;
-}
+bool SakharovACannonAlgorithmMPI::PostProcessingImpl() { return true; }
 
 }  // namespace sakharov_a_cannon_algorithm

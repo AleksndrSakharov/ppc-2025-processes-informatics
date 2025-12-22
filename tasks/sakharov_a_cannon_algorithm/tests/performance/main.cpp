@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <ostream>
@@ -10,10 +11,11 @@
 #include "sakharov_a_cannon_algorithm/mpi/include/ops_mpi.hpp"
 #include "sakharov_a_cannon_algorithm/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace ppc::util {
 template <typename InType, typename OutType>
-static inline void PrintTo(const PerfTestParam<InType, OutType> &param, ::std::ostream *os) {
+static inline void PrintTo(const PerfTestParam<InType, OutType>& param, ::std::ostream* os) {
   *os << "PerfTestParam{"
       << "name=" << std::get<static_cast<std::size_t>(GTestParamIndex::kNameTest)>(param) << "}";
 }
@@ -31,22 +33,20 @@ class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
     expected_result_ = NaiveMultiply(input_data_);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType& output_data) final {
     if (expected_result_.size() != output_data.size()) {
       return false;
     }
     constexpr double kEps = 1e-6;
-    for (std::size_t i = 0; i < expected_result_.size(); ++i) {
-      if (std::abs(expected_result_[i] - output_data[i]) > kEps) {
+    for (std::size_t idx = 0; idx < expected_result_.size(); ++idx) {
+      if (std::abs(expected_result_[idx] - output_data[idx]) > kEps) {
         return false;
       }
     }
     return true;
   }
 
-  InType GetTestInputData() final {
-    return input_data_;
-  }
+  InType GetTestInputData() final { return input_data_; }
 
   static int SelectSize() {
     int world_size = 1;
@@ -65,26 +65,26 @@ class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
     in.a.resize(total);
     in.b.resize(total);
 
-    for (int i = 0; i < size; ++i) {
-      for (int j = 0; j < size; ++j) {
-        in.a[Idx(size, i, j)] = static_cast<double>((i + 1) * (j + 2) % 100) * 0.01;
-        in.b[Idx(size, i, j)] = (i == j) ? 1.0 : static_cast<double>((j % 3) + 1) * 0.1;
+    for (int ii = 0; ii < size; ++ii) {
+      for (int jj = 0; jj < size; ++jj) {
+        in.a[Idx(size, ii, jj)] = static_cast<double>(((ii + 1) * (jj + 2)) % 100) * 0.01;
+        in.b[Idx(size, ii, jj)] = (ii == jj) ? 1.0 : static_cast<double>((jj % 3) + 1) * 0.1;
       }
     }
     return in;
   }
 
-  static OutType NaiveMultiply(const InType &input) {
+  static OutType NaiveMultiply(const InType& input) {
     const int m = input.rows_a;
     const int k = input.cols_a;
     const int n = input.cols_b;
     OutType result(static_cast<std::size_t>(m) * static_cast<std::size_t>(n), 0.0);
 
-    for (int i = 0; i < m; ++i) {
-      for (int p = 0; p < k; ++p) {
-        double a_val = input.a[Idx(k, i, p)];
-        for (int j = 0; j < n; ++j) {
-          result[Idx(n, i, j)] += a_val * input.b[Idx(n, p, j)];
+    for (int ii = 0; ii < m; ++ii) {
+      for (int kk = 0; kk < k; ++kk) {
+        double a_val = input.a[Idx(k, ii, kk)];
+        for (int jj = 0; jj < n; ++jj) {
+          result[Idx(n, ii, jj)] += a_val * input.b[Idx(n, kk, jj)];
         }
       }
     }
@@ -92,9 +92,7 @@ class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
   }
 };
 
-TEST_P(SakharovARunPerfTestProcesses, RunPerfModes) {
-  ExecuteTest(GetParam());
-}
+TEST_P(SakharovARunPerfTestProcesses, RunPerfModes) { ExecuteTest(GetParam()); }
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, SakharovACannonAlgorithmMPI, SakharovACannonAlgorithmSEQ>(
