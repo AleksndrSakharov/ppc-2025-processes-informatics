@@ -7,8 +7,10 @@ namespace sakharov_a_cannon_algorithm {
 
 class SakharovACannonAlgorithmMPI : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { return ppc::task::TypeOfTask::kMPI; }
-  explicit SakharovACannonAlgorithmMPI(const InType& in);
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kMPI;
+  }
+  explicit SakharovACannonAlgorithmMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;

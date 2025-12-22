@@ -27,7 +27,7 @@ inline std::size_t Idx(int cols, int row, int col) {
   return (static_cast<std::size_t>(row) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(col);
 }
 
-inline bool IsValidInput(const MatrixInput& input) {
+inline bool IsValidInput(const MatrixInput &input) {
   if (input.rows_a <= 0 || input.cols_a <= 0 || input.rows_b <= 0 || input.cols_b <= 0) {
     return false;
   }

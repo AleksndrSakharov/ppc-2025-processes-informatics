@@ -7,23 +7,25 @@
 
 namespace sakharov_a_cannon_algorithm {
 
-SakharovACannonAlgorithmSEQ::SakharovACannonAlgorithmSEQ(const InType& in) {
+SakharovACannonAlgorithmSEQ::SakharovACannonAlgorithmSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
-bool SakharovACannonAlgorithmSEQ::ValidationImpl() { return IsValidInput(GetInput()); }
+bool SakharovACannonAlgorithmSEQ::ValidationImpl() {
+  return IsValidInput(GetInput());
+}
 
 bool SakharovACannonAlgorithmSEQ::PreProcessingImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
   auto out_size = static_cast<std::size_t>(input.rows_a) * static_cast<std::size_t>(input.cols_b);
   GetOutput().assign(out_size, 0.0);
   return true;
 }
 
 bool SakharovACannonAlgorithmSEQ::RunImpl() {
-  const auto& input = GetInput();
-  auto& output = GetOutput();
+  const auto &input = GetInput();
+  auto &output = GetOutput();
 
   const int m = input.rows_a;
   const int k = input.cols_a;
@@ -41,6 +43,8 @@ bool SakharovACannonAlgorithmSEQ::RunImpl() {
   return true;
 }
 
-bool SakharovACannonAlgorithmSEQ::PostProcessingImpl() { return true; }
+bool SakharovACannonAlgorithmSEQ::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace sakharov_a_cannon_algorithm

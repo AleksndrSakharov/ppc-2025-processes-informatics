@@ -15,7 +15,7 @@
 
 namespace ppc::util {
 template <typename InType, typename OutType>
-static inline void PrintTo(const PerfTestParam<InType, OutType>& param, ::std::ostream* os) {
+static inline void PrintTo(const PerfTestParam<InType, OutType> &param, ::std::ostream *os) {
   *os << "PerfTestParam{"
       << "name=" << std::get<static_cast<std::size_t>(GTestParamIndex::kNameTest)>(param) << "}";
 }
@@ -33,7 +33,7 @@ class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
     expected_result_ = NaiveMultiply(input_data_);
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     if (expected_result_.size() != output_data.size()) {
       return false;
     }
@@ -46,7 +46,9 @@ class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
     return true;
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
   static int SelectSize() {
     int world_size = 1;
@@ -74,7 +76,7 @@ class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
     return in;
   }
 
-  static OutType NaiveMultiply(const InType& input) {
+  static OutType NaiveMultiply(const InType &input) {
     const int m = input.rows_a;
     const int k = input.cols_a;
     const int n = input.cols_b;
@@ -92,7 +94,9 @@ class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
   }
 };
 
-TEST_P(SakharovARunPerfTestProcesses, RunPerfModes) { ExecuteTest(GetParam()); }
+TEST_P(SakharovARunPerfTestProcesses, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, SakharovACannonAlgorithmMPI, SakharovACannonAlgorithmSEQ>(

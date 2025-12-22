@@ -11,8 +11,8 @@ namespace sakharov_a_cannon_algorithm {
 
 namespace {
 
-void LocalMultiply(const std::vector<double>& a_block, const std::vector<double>& b_block,
-                   std::vector<double>& c_block, int local_rows, int k_dim, int local_cols) {
+void LocalMultiply(const std::vector<double> &a_block, const std::vector<double> &b_block, std::vector<double> &c_block,
+                   int local_rows, int k_dim, int local_cols) {
   for (int ii = 0; ii < local_rows; ++ii) {
     for (int kk = 0; kk < k_dim; ++kk) {
       double a_val = a_block[(static_cast<std::size_t>(ii) * static_cast<std::size_t>(k_dim)) + kk];
@@ -24,7 +24,7 @@ void LocalMultiply(const std::vector<double>& a_block, const std::vector<double>
   }
 }
 
-void SequentialMultiply(const MatrixInput& input, std::vector<double>& output) {
+void SequentialMultiply(const MatrixInput &input, std::vector<double> &output) {
   const int m = input.rows_a;
   const int k = input.cols_a;
   const int n = input.cols_b;
@@ -40,15 +40,17 @@ void SequentialMultiply(const MatrixInput& input, std::vector<double>& output) {
 
 }  // namespace
 
-SakharovACannonAlgorithmMPI::SakharovACannonAlgorithmMPI(const InType& in) {
+SakharovACannonAlgorithmMPI::SakharovACannonAlgorithmMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
-bool SakharovACannonAlgorithmMPI::ValidationImpl() { return IsValidInput(GetInput()); }
+bool SakharovACannonAlgorithmMPI::ValidationImpl() {
+  return IsValidInput(GetInput());
+}
 
 bool SakharovACannonAlgorithmMPI::PreProcessingImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
   auto out_size = static_cast<std::size_t>(input.rows_a) * static_cast<std::size_t>(input.cols_b);
   GetOutput().assign(out_size, 0.0);
   return true;
@@ -60,7 +62,7 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  const auto& input = GetInput();
+  const auto &input = GetInput();
   const int m = input.rows_a;
   const int k = input.cols_a;
   const int n = input.cols_b;
@@ -122,6 +124,8 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
   return true;
 }
 
-bool SakharovACannonAlgorithmMPI::PostProcessingImpl() { return true; }
+bool SakharovACannonAlgorithmMPI::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace sakharov_a_cannon_algorithm

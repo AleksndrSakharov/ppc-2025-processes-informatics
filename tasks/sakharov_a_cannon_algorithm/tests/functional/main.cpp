@@ -16,7 +16,7 @@
 
 namespace ppc::util {
 template <typename InType, typename OutType, typename TestType>
-static inline void PrintTo(const FuncTestParam<InType, OutType, TestType>& param, ::std::ostream* os) {
+static inline void PrintTo(const FuncTestParam<InType, OutType, TestType> &param, ::std::ostream *os) {
   *os << "FuncTestParam{"
       << "name=" << std::get<static_cast<std::size_t>(GTestParamIndex::kNameTest)>(param) << "}";
 }
@@ -26,7 +26,9 @@ namespace sakharov_a_cannon_algorithm {
 
 class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType& test_param) { return std::get<2>(test_param); }
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::get<2>(test_param);
+  }
 
  protected:
   void SetUp() override {
@@ -35,7 +37,7 @@ class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
     expected_output_ = std::get<1>(params);
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     if (expected_output_.size() != output_data.size()) {
       return false;
     }
@@ -48,7 +50,9 @@ class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
     return true;
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
@@ -57,7 +61,7 @@ class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 
 namespace {
 
-OutType NaiveMultiply(const InType& input) {
+OutType NaiveMultiply(const InType &input) {
   const int m = input.rows_a;
   const int k = input.cols_a;
   const int n = input.cols_b;
@@ -74,9 +78,13 @@ OutType NaiveMultiply(const InType& input) {
   return result;
 }
 
-TestType MakeCase(const InType& input, const std::string& name) { return TestType{input, NaiveMultiply(input), name}; }
+TestType MakeCase(const InType &input, const std::string &name) {
+  return TestType{input, NaiveMultiply(input), name};
+}
 
-TEST_P(SakharovARunFuncTestsProcesses, MatrixMultiply) { ExecuteTest(GetParam()); }
+TEST_P(SakharovARunFuncTestsProcesses, MatrixMultiply) {
+  ExecuteTest(GetParam());
+}
 
 const std::array<TestType, 8> kTestParam = {
     MakeCase(InType{1, 1, 1, 1, {2.0}, {3.0}}, "single_element"),
