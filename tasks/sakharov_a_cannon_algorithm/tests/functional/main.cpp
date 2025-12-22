@@ -14,7 +14,6 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-// Avoid gtest dumping raw std::function bytes from FuncTestParam, which triggers valgrind UMRs.
 namespace ppc::util {
 template <typename InType, typename OutType, typename TestType>
 static inline void PrintTo(const FuncTestParam<InType, OutType, TestType> &param, ::std::ostream *os) {
@@ -34,8 +33,7 @@ class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    InType in = std::get<0>(params);
-    input_data_ = in;
+    input_data_ = std::get<0>(params);
     expected_output_ = std::get<1>(params);
   }
 
@@ -43,7 +41,6 @@ class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
     if (expected_output_.size() != output_data.size()) {
       return false;
     }
-
     constexpr double kEps = 1e-9;
     for (std::size_t i = 0; i < expected_output_.size(); ++i) {
       if (std::abs(expected_output_[i] - output_data[i]) > kEps) {
@@ -65,18 +62,19 @@ class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 namespace {
 
 OutType NaiveMultiply(const InType &input) {
-  const int n = input.size;
-  OutType result(static_cast<std::size_t>(n) * static_cast<std::size_t>(n), 0.0);
+  const int m = input.rows_a;
+  const int k = input.cols_a;
+  const int n = input.cols_b;
+  OutType result(static_cast<std::size_t>(m) * static_cast<std::size_t>(n), 0.0);
 
-  for (int i = 0; i < n; ++i) {
-    for (int k = 0; k < n; ++k) {
-      const double a_val = input.a[Offset(n, i, k)];
+  for (int i = 0; i < m; ++i) {
+    for (int p = 0; p < k; ++p) {
+      double a_val = input.a[Idx(k, i, p)];
       for (int j = 0; j < n; ++j) {
-        result[Offset(n, i, j)] += a_val * input.b[Offset(n, k, j)];
+        result[Idx(n, i, j)] += a_val * input.b[Idx(n, p, j)];
       }
     }
   }
-
   return result;
 }
 
@@ -88,15 +86,21 @@ TEST_P(SakharovARunFuncTestsProcesses, MatrixMultiply) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 4> kTestParam = {
-    MakeCase(InType{1, {2.0}, {3.0}}, "single_element"),
-    MakeCase(InType{2, {1.0, 2.0, 3.0, 4.0}, {5.0, 6.0, 7.0, 8.0}}, "two_by_two"),
-    MakeCase(InType{3, {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0}, {4.0, 1.0, 2.0, 0.0, 3.0, 5.0, -1.0, 7.0, 2.0}},
-             "identity_multiplies"),
+const std::array<TestType, 8> kTestParam = {
+    MakeCase(InType{1, 1, 1, 1, {2.0}, {3.0}}, "single_element"),
+    MakeCase(InType{2, 2, 2, 2, {1.0, 2.0, 3.0, 4.0}, {5.0, 6.0, 7.0, 8.0}}, "two_by_two"),
+    MakeCase(InType{3, 3, 3, 3, {1, 0, 0, 0, 1, 0, 0, 0, 1}, {4, 1, 2, 0, 3, 5, -1, 7, 2}}, "identity_mult"),
     MakeCase(InType{4,
-                    {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0},
-                    {1.0, 0.0, 2.0, -1.0, 3.0, 1.0, 0.0, 2.0, 1.0, 4.0, -2.0, 0.0, 0.0, 1.0, 3.0, 2.0}},
-             "four_by_four_blocked")};
+                    4,
+                    4,
+                    4,
+                    {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+                    {1, 0, 2, -1, 3, 1, 0, 2, 1, 4, -2, 0, 0, 1, 3, 2}},
+             "four_by_four"),
+    MakeCase(InType{2, 3, 3, 2, {1, 2, 3, 4, 5, 6}, {7, 8, 9, 10, 11, 12}}, "rect_2x3_3x2"),
+    MakeCase(InType{3, 2, 2, 4, {1, 2, 3, 4, 5, 6}, {1, 2, 3, 4, 5, 6, 7, 8}}, "rect_3x2_2x4"),
+    MakeCase(InType{1, 4, 4, 1, {1, 2, 3, 4}, {5, 6, 7, 8}}, "row_times_col"),
+    MakeCase(InType{4, 1, 1, 4, {1, 2, 3, 4}, {5, 6, 7, 8}}, "col_times_row")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<SakharovACannonAlgorithmMPI, InType>(kTestParam, PPC_SETTINGS_sakharov_a_cannon_algorithm),

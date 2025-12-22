@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <ostream>
@@ -12,7 +11,6 @@
 #include "sakharov_a_cannon_algorithm/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-// Prevent gtest from printing std::function internals in PerfTestParam and causing valgrind noise.
 namespace ppc::util {
 template <typename InType, typename OutType>
 static inline void PrintTo(const PerfTestParam<InType, OutType> &param, ::std::ostream *os) {
@@ -37,8 +35,7 @@ class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
     if (expected_result_.size() != output_data.size()) {
       return false;
     }
-
-    constexpr double kEps = 1e-9;
+    constexpr double kEps = 1e-6;
     for (std::size_t i = 0; i < expected_result_.size(); ++i) {
       if (std::abs(expected_result_[i] - output_data[i]) > kEps) {
         return false;
@@ -54,40 +51,43 @@ class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
   static int SelectSize() {
     int world_size = 1;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-    const int grid_dim = std::max(1, static_cast<int>(std::sqrt(static_cast<double>(world_size))));
-    constexpr int kBlock = 128;
-    return grid_dim * kBlock;
+    constexpr int kBaseSize = 1024;
+    return std::max(kBaseSize, world_size * 128);
   }
 
   static InType BuildInput(int size) {
     InType in{};
-    in.size = size;
-    in.a.resize(static_cast<std::size_t>(size) * static_cast<std::size_t>(size));
-    in.b.resize(static_cast<std::size_t>(size) * static_cast<std::size_t>(size));
+    in.rows_a = size;
+    in.cols_a = size;
+    in.rows_b = size;
+    in.cols_b = size;
+    auto total = static_cast<std::size_t>(size) * static_cast<std::size_t>(size);
+    in.a.resize(total);
+    in.b.resize(total);
 
     for (int i = 0; i < size; ++i) {
       for (int j = 0; j < size; ++j) {
-        in.a[Offset(size, i, j)] = static_cast<double>((i + 1) * (j + 2));
-        in.b[Offset(size, i, j)] = (i == j) ? 1.0 : static_cast<double>((j % 3) + 1);
+        in.a[Idx(size, i, j)] = static_cast<double>((i + 1) * (j + 2) % 100) * 0.01;
+        in.b[Idx(size, i, j)] = (i == j) ? 1.0 : static_cast<double>((j % 3) + 1) * 0.1;
       }
     }
-
     return in;
   }
 
   static OutType NaiveMultiply(const InType &input) {
-    const int n = input.size;
-    OutType result(static_cast<std::size_t>(n) * static_cast<std::size_t>(n), 0.0);
+    const int m = input.rows_a;
+    const int k = input.cols_a;
+    const int n = input.cols_b;
+    OutType result(static_cast<std::size_t>(m) * static_cast<std::size_t>(n), 0.0);
 
-    for (int i = 0; i < n; ++i) {
-      for (int k = 0; k < n; ++k) {
-        const double a_val = input.a[Offset(n, i, k)];
+    for (int i = 0; i < m; ++i) {
+      for (int p = 0; p < k; ++p) {
+        double a_val = input.a[Idx(k, i, p)];
         for (int j = 0; j < n; ++j) {
-          result[Offset(n, i, j)] += a_val * input.b[Offset(n, k, j)];
+          result[Idx(n, i, j)] += a_val * input.b[Idx(n, p, j)];
         }
       }
     }
-
     return result;
   }
 };
