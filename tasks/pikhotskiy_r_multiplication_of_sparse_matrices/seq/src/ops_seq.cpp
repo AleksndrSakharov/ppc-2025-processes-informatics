@@ -115,8 +115,10 @@ bool SparseMatrixMultiplicationSEQ::PreProcessingImpl() {
 bool SparseMatrixMultiplicationSEQ::RunImpl() {
   const auto &mat_b = std::get<1>(GetInput());
   SparseMatrixCRS result(mat_a_.rows, mat_b.cols);
-  result.row_ptr.resize(mat_a_.rows + 1);
-  result.row_ptr[0] = 0;
+  result.row_ptr.resize(static_cast<size_t>(mat_a_.rows) + 1);
+  if (!result.row_ptr.empty()) {
+    result.row_ptr[0] = 0;
+  }
 
   for (int i = 0; i < mat_a_.rows; ++i) {
     for (int j = 0; j < mat_b.cols; ++j) {
