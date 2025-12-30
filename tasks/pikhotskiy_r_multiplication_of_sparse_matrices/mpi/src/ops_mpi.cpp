@@ -233,6 +233,8 @@ bool SparseMatrixMultiplicationMPI::RunImpl() {
   return true;
 }
 
-bool SparseMatrixMultiplicationMPI::PostProcessingImpl() { return true; }
+bool SparseMatrixMultiplicationMPI::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace pikhotskiy_r_multiplication_of_sparse_matrices

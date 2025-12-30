@@ -101,7 +101,7 @@ RunImpl():
                 local_result.col_indices.push(j)
         local_result.row_ptr[local_i+1] = local_result.values.size()
     
-    GatherResults(local_result, my_start_row, my_num_rows)
+    GatherResults(local_result, my_num_rows)
     BroadcastSparseMatrix(result, root=0)
     return true
 ```
@@ -120,6 +120,7 @@ RunImpl():
 ### 5.2. Ключевые классы и функции
 
 - `SparseMatrixCRS` — структура для хранения разреженной матрицы в формате CRS.
+- `ComputeRowColProduct` — вычисление скалярного произведения строки $A$ и столбца $B$ (через транспонированную $B^T$).
 - `TransposeCRS` — транспонирование CRS-матрицы за $O(nnz)$.
 - `DenseToCRS` / `CRSToDense` — конвертация между плотным и разреженным форматами.
 - `CompareSparseMatrices` — сравнение матриц с допуском $\varepsilon = 10^{-9}$.

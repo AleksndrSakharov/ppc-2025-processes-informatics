@@ -159,6 +159,8 @@ bool SparseMatrixMultiplicationSEQ::RunImpl() {
   return true;
 }
 
-bool SparseMatrixMultiplicationSEQ::PostProcessingImpl() { return true; }
+bool SparseMatrixMultiplicationSEQ::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace pikhotskiy_r_multiplication_of_sparse_matrices
