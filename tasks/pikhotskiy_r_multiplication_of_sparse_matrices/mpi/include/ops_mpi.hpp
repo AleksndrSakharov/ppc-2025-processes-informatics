@@ -9,8 +9,10 @@ namespace pikhotskiy_r_multiplication_of_sparse_matrices {
 
 class SparseMatrixMultiplicationMPI : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { return ppc::task::TypeOfTask::kMPI; }
-  explicit SparseMatrixMultiplicationMPI(const InType& in);
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kMPI;
+  }
+  explicit SparseMatrixMultiplicationMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -19,8 +21,8 @@ class SparseMatrixMultiplicationMPI : public BaseTask {
   bool PostProcessingImpl() override;
 
   // Helper methods for MPI communication
-  void BroadcastSparseMatrix(SparseMatrixCRS& matrix, int root);
-  void GatherResults(const SparseMatrixCRS& local_result, int my_start_row, int my_num_rows);
+  void BroadcastSparseMatrix(SparseMatrixCRS &matrix, int root);
+  void GatherResults(const SparseMatrixCRS &local_result, int my_start_row, int my_num_rows);
 
   SparseMatrixCRS mat_a_;
   SparseMatrixCRS mat_b_;

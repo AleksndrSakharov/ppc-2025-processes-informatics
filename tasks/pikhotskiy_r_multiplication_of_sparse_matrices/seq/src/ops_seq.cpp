@@ -6,7 +6,7 @@
 
 namespace pikhotskiy_r_multiplication_of_sparse_matrices {
 
-SparseMatrixCRS DenseToCRS(const std::vector<double>& dense, int rows, int cols) {
+SparseMatrixCRS DenseToCRS(const std::vector<double> &dense, int rows, int cols) {
   SparseMatrixCRS result(rows, cols);
   result.row_ptr.resize(rows + 1);
   result.row_ptr[0] = 0;
@@ -24,7 +24,7 @@ SparseMatrixCRS DenseToCRS(const std::vector<double>& dense, int rows, int cols)
   return result;
 }
 
-std::vector<double> CRSToDense(const SparseMatrixCRS& sparse) {
+std::vector<double> CRSToDense(const SparseMatrixCRS &sparse) {
   std::vector<double> dense(static_cast<size_t>(sparse.rows) * sparse.cols, 0.0);
   for (int i = 0; i < sparse.rows; ++i) {
     for (int k = sparse.row_ptr[i]; k < sparse.row_ptr[i + 1]; ++k) {
@@ -34,7 +34,7 @@ std::vector<double> CRSToDense(const SparseMatrixCRS& sparse) {
   return dense;
 }
 
-SparseMatrixCRS TransposeCRS(const SparseMatrixCRS& matrix) {
+SparseMatrixCRS TransposeCRS(const SparseMatrixCRS &matrix) {
   SparseMatrixCRS result(matrix.cols, matrix.rows);
   result.row_ptr.resize(matrix.cols + 1, 0);
 
@@ -65,7 +65,7 @@ SparseMatrixCRS TransposeCRS(const SparseMatrixCRS& matrix) {
   return result;
 }
 
-bool CompareSparseMatrices(const SparseMatrixCRS& a, const SparseMatrixCRS& b, double eps) {
+bool CompareSparseMatrices(const SparseMatrixCRS &a, const SparseMatrixCRS &b, double eps) {
   if (a.rows != b.rows || a.cols != b.cols) {
     return false;
   }
@@ -79,14 +79,14 @@ bool CompareSparseMatrices(const SparseMatrixCRS& a, const SparseMatrixCRS& b, d
   return true;
 }
 
-SparseMatrixMultiplicationSEQ::SparseMatrixMultiplicationSEQ(const InType& in) {
+SparseMatrixMultiplicationSEQ::SparseMatrixMultiplicationSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool SparseMatrixMultiplicationSEQ::ValidationImpl() {
-  const auto& mat_a = std::get<0>(GetInput());
-  const auto& mat_b = std::get<1>(GetInput());
+  const auto &mat_a = std::get<0>(GetInput());
+  const auto &mat_b = std::get<1>(GetInput());
 
   if (mat_a.cols != mat_b.rows) {
     return false;
@@ -113,7 +113,7 @@ bool SparseMatrixMultiplicationSEQ::PreProcessingImpl() {
 }
 
 bool SparseMatrixMultiplicationSEQ::RunImpl() {
-  const auto& mat_b = std::get<1>(GetInput());
+  const auto &mat_b = std::get<1>(GetInput());
   SparseMatrixCRS result(mat_a_.rows, mat_b.cols);
   result.row_ptr.resize(mat_a_.rows + 1);
   result.row_ptr[0] = 0;
@@ -158,6 +158,8 @@ bool SparseMatrixMultiplicationSEQ::RunImpl() {
   return true;
 }
 
-bool SparseMatrixMultiplicationSEQ::PostProcessingImpl() { return true; }
+bool SparseMatrixMultiplicationSEQ::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace pikhotskiy_r_multiplication_of_sparse_matrices

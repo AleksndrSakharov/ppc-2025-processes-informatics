@@ -12,7 +12,7 @@
 namespace pikhotskiy_r_multiplication_of_sparse_matrices {
 
 const int kMatrixSize = 300;
-const double kSparsity = 0.1; 
+const double kSparsity = 0.1;
 
 class SparseMatrixMultPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
@@ -24,7 +24,9 @@ class SparseMatrixMultPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
     std::vector<double> dense_b(static_cast<size_t>(kMatrixSize) * kMatrixSize, 0.0);
 
     int step = static_cast<int>(1.0 / kSparsity);
-    if (step < 1) step = 1;
+    if (step < 1) {
+      step = 1;
+    }
 
     for (int i = 0; i < kMatrixSize; ++i) {
       for (int j = 0; j < kMatrixSize; ++j) {
@@ -55,17 +57,22 @@ class SparseMatrixMultPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
     expected_result_ = DenseToCRS(expected_dense, kMatrixSize, kMatrixSize);
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     return CompareSparseMatrices(output_data, expected_result_, 1e-9);
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 };
 
-TEST_P(SparseMatrixMultPerfTests, RunPerfModes) { ExecuteTest(GetParam()); }
+TEST_P(SparseMatrixMultPerfTests, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SparseMatrixMultiplicationMPI, SparseMatrixMultiplicationSEQ>(
-    PPC_SETTINGS_pikhotskiy_r_multiplication_of_sparse_matrices);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, SparseMatrixMultiplicationMPI, SparseMatrixMultiplicationSEQ>(
+        PPC_SETTINGS_pikhotskiy_r_multiplication_of_sparse_matrices);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

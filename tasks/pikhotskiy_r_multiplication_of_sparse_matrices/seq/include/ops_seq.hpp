@@ -7,8 +7,10 @@ namespace pikhotskiy_r_multiplication_of_sparse_matrices {
 
 class SparseMatrixMultiplicationSEQ : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { return ppc::task::TypeOfTask::kSEQ; }
-  explicit SparseMatrixMultiplicationSEQ(const InType& in);
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSEQ;
+  }
+  explicit SparseMatrixMultiplicationSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;

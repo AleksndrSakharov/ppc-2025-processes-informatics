@@ -16,7 +16,9 @@ namespace pikhotskiy_r_multiplication_of_sparse_matrices {
 
 class SparseMatrixMultFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType& test_param) { return std::get<2>(test_param); }
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::get<2>(test_param);
+  }
 
  protected:
   void SetUp() override {
@@ -24,9 +26,9 @@ class SparseMatrixMultFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     input_data_ = std::make_tuple(std::get<0>(params), std::get<1>(params));
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
-    const auto& mat_a = std::get<0>(input_data_);
-    const auto& mat_b = std::get<1>(input_data_);
+  bool CheckTestOutputData(OutType &output_data) final {
+    const auto &mat_a = std::get<0>(input_data_);
+    const auto &mat_b = std::get<1>(input_data_);
 
     // Compute expected result using dense multiplication
     auto dense_a = CRSToDense(mat_a);
@@ -47,7 +49,9 @@ class SparseMatrixMultFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     return CompareSparseMatrices(output_data, expected, 1e-9);
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
@@ -55,24 +59,28 @@ class SparseMatrixMultFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
 
 namespace {
 
-TEST_P(SparseMatrixMultFuncTests, SparseMatrixMultiplication) { ExecuteTest(GetParam()); }
+TEST_P(SparseMatrixMultFuncTests, SparseMatrixMultiplication) {
+  ExecuteTest(GetParam());
+}
 
 // Helper function to create test case
-TestType CreateTestCase(const std::vector<double>& dense_a, int rows_a, int cols_a, const std::vector<double>& dense_b,
-                        int rows_b, int cols_b, const std::string& name) {
+TestType CreateTestCase(const std::vector<double> &dense_a, int rows_a, int cols_a, const std::vector<double> &dense_b,
+                        int rows_b, int cols_b, const std::string &name) {
   SparseMatrixCRS mat_a = DenseToCRS(dense_a, rows_a, cols_a);
   SparseMatrixCRS mat_b = DenseToCRS(dense_b, rows_b, cols_b);
   return std::make_tuple(mat_a, mat_b, name);
 }
 
 // Helper to create sparse matrix with given sparsity
-TestType CreateSparseTest(int rows_a, int cols_a, int cols_b, double sparsity, const std::string& name) {
+TestType CreateSparseTest(int rows_a, int cols_a, int cols_b, double sparsity, const std::string &name) {
   std::vector<double> dense_a(static_cast<size_t>(rows_a) * cols_a, 0.0);
   std::vector<double> dense_b(static_cast<size_t>(cols_a) * cols_b, 0.0);
 
   // Fill with pattern based on sparsity
   int step = static_cast<int>(1.0 / sparsity);
-  if (step < 1) step = 1;
+  if (step < 1) {
+    step = 1;
+  }
 
   for (int i = 0; i < rows_a; ++i) {
     for (int j = 0; j < cols_a; ++j) {
@@ -125,11 +133,11 @@ const std::array<TestType, 12> kTestParam = {
 
     CreateSparseTest(8, 6, 4, 0.25, "Sparse_Rectangular_8x6x4")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<SparseMatrixMultiplicationMPI, InType>(kTestParam,
-                                                                  PPC_SETTINGS_pikhotskiy_r_multiplication_of_sparse_matrices),
-    ppc::util::AddFuncTask<SparseMatrixMultiplicationSEQ, InType>(kTestParam,
-                                                                  PPC_SETTINGS_pikhotskiy_r_multiplication_of_sparse_matrices));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<SparseMatrixMultiplicationMPI, InType>(
+                       kTestParam, PPC_SETTINGS_pikhotskiy_r_multiplication_of_sparse_matrices),
+                   ppc::util::AddFuncTask<SparseMatrixMultiplicationSEQ, InType>(
+                       kTestParam, PPC_SETTINGS_pikhotskiy_r_multiplication_of_sparse_matrices));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

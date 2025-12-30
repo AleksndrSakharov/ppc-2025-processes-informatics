@@ -8,7 +8,7 @@
 
 namespace pikhotskiy_r_multiplication_of_sparse_matrices {
 
-SparseMatrixMultiplicationMPI::SparseMatrixMultiplicationMPI(const InType& in) {
+SparseMatrixMultiplicationMPI::SparseMatrixMultiplicationMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -17,7 +17,7 @@ SparseMatrixMultiplicationMPI::SparseMatrixMultiplicationMPI(const InType& in) {
   }
 }
 
-void SparseMatrixMultiplicationMPI::BroadcastSparseMatrix(SparseMatrixCRS& matrix, int root) {
+void SparseMatrixMultiplicationMPI::BroadcastSparseMatrix(SparseMatrixCRS &matrix, int root) {
   MPI_Bcast(&matrix.rows, 1, MPI_INT, root, MPI_COMM_WORLD);
   MPI_Bcast(&matrix.cols, 1, MPI_INT, root, MPI_COMM_WORLD);
 
@@ -45,8 +45,8 @@ bool SparseMatrixMultiplicationMPI::ValidationImpl() {
   int error_flag = 0;
 
   if (rank == 0) {
-    const auto& mat_a = std::get<0>(GetInput());
-    const auto& mat_b = std::get<1>(GetInput());
+    const auto &mat_a = std::get<0>(GetInput());
+    const auto &mat_b = std::get<1>(GetInput());
 
     if (mat_a.cols != mat_b.rows) {
       error_flag = 1;
@@ -91,7 +91,7 @@ bool SparseMatrixMultiplicationMPI::PreProcessingImpl() {
   return true;
 }
 
-void SparseMatrixMultiplicationMPI::GatherResults(const SparseMatrixCRS& local_result, int /*my_start_row*/,
+void SparseMatrixMultiplicationMPI::GatherResults(const SparseMatrixCRS &local_result, int /*my_start_row*/,
                                                   int my_num_rows) {
   int rank = 0;
   int size = 0;
@@ -167,7 +167,7 @@ void SparseMatrixMultiplicationMPI::GatherResults(const SparseMatrixCRS& local_r
     GetOutput() = result;
   }
 
-  SparseMatrixCRS& output = GetOutput();
+  SparseMatrixCRS &output = GetOutput();
   BroadcastSparseMatrix(output, 0);
 }
 
@@ -233,6 +233,8 @@ bool SparseMatrixMultiplicationMPI::RunImpl() {
   return true;
 }
 
-bool SparseMatrixMultiplicationMPI::PostProcessingImpl() { return true; }
+bool SparseMatrixMultiplicationMPI::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace pikhotskiy_r_multiplication_of_sparse_matrices
