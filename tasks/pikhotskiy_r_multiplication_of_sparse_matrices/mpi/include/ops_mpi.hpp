@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "pikhotskiy_r_multiplication_of_sparse_matrices/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -20,9 +18,8 @@ class SparseMatrixMultiplicationMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  // Helper methods for MPI communication
-  void BroadcastSparseMatrix(SparseMatrixCRS &matrix, int root);
-  void GatherResults(const SparseMatrixCRS &local_result, int my_start_row, int my_num_rows);
+  static void BroadcastSparseMatrix(SparseMatrixCRS &matrix, int root);
+  void GatherResults(const SparseMatrixCRS &local_result, int my_num_rows);
 
   SparseMatrixCRS mat_a_;
   SparseMatrixCRS mat_b_;

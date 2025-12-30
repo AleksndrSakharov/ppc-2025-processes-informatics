@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <tuple>
 #include <vector>
@@ -23,10 +24,7 @@ class SparseMatrixMultPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
     std::vector<double> dense_a(static_cast<size_t>(kMatrixSize) * kMatrixSize, 0.0);
     std::vector<double> dense_b(static_cast<size_t>(kMatrixSize) * kMatrixSize, 0.0);
 
-    int step = static_cast<int>(1.0 / kSparsity);
-    if (step < 1) {
-      step = 1;
-    }
+    int step = std::max(1, static_cast<int>(1.0 / kSparsity));
 
     for (int i = 0; i < kMatrixSize; ++i) {
       for (int j = 0; j < kMatrixSize; ++j) {

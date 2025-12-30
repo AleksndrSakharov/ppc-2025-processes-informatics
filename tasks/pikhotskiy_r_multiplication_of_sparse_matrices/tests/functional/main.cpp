@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <string>
@@ -77,10 +78,7 @@ TestType CreateSparseTest(int rows_a, int cols_a, int cols_b, double sparsity, c
   std::vector<double> dense_b(static_cast<size_t>(cols_a) * cols_b, 0.0);
 
   // Fill with pattern based on sparsity
-  int step = static_cast<int>(1.0 / sparsity);
-  if (step < 1) {
-    step = 1;
-  }
+  int step = std::max(1, static_cast<int>(1.0 / sparsity));
 
   for (int i = 0; i < rows_a; ++i) {
     for (int j = 0; j < cols_a; ++j) {
