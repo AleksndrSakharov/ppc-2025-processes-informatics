@@ -166,8 +166,12 @@ void SparseMatrixMultiplicationMPI::GatherResults(const SparseMatrixCRS &local_r
     ComputeDisplacements(size, all_nnz, all_num_rows, nnz_displs, row_displs, total_nnz);
   }
 
-  std::vector<double> all_values(rank == 0 ? total_nnz : 0);
-  std::vector<int> all_col_indices(rank == 0 ? total_nnz : 0);
+  std::vector<double> all_values;
+  std::vector<int> all_col_indices;
+  if (rank == 0 && total_nnz > 0) {
+    all_values.resize(total_nnz);
+    all_col_indices.resize(total_nnz);
+  }
   MPI_Gatherv(local_result.values.data(), local_nnz, MPI_DOUBLE, all_values.data(), all_nnz.data(), nnz_displs.data(),
               MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Gatherv(local_result.col_indices.data(), local_nnz, MPI_INT, all_col_indices.data(), all_nnz.data(),
@@ -178,7 +182,10 @@ void SparseMatrixMultiplicationMPI::GatherResults(const SparseMatrixCRS &local_r
     local_row_ptr_shifted[i] = local_result.row_ptr[i + 1];
   }
 
-  std::vector<int> all_row_ptr_shifted(rank == 0 ? mat_a_.rows : 0);
+  std::vector<int> all_row_ptr_shifted;
+  if (rank == 0 && mat_a_.rows > 0) {
+    all_row_ptr_shifted.resize(mat_a_.rows);
+  }
   MPI_Gatherv(local_row_ptr_shifted.data(), my_num_rows, MPI_INT, all_row_ptr_shifted.data(), all_num_rows.data(),
               row_displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
 
